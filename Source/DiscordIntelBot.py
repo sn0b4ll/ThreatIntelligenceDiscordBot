@@ -4,17 +4,19 @@ import os
 import requests
 import time
 from configparser import ConfigParser, NoOptionError
-from discord import Webhook, RequestsWebhookAdapter
+# from discord import Webhook, RequestsWebhookAdapter
 
 # expects the configuration file in the same directory as this script by default, replace if desired otherwise
 configuration_file_path = os.path.join(os.path.split(os.path.abspath(__file__))[0], 'Config.txt')
 
 # put the discord hook urls to the channels you want to receive feeds in here
+''' 
 private_sector_feed = Webhook.from_url('https://discord.com/api/webhooks/000/000', adapter=RequestsWebhookAdapter())
 government_feed = Webhook.from_url('https://discord.com/api/webhooks/000/000', adapter=RequestsWebhookAdapter())
 ransomware_feed = Webhook.from_url('https://discord.com/api/webhooks/000/000', adapter=RequestsWebhookAdapter())
 # this one is logging of moniotring status only
 status_messages = Webhook.from_url('https://discord.com/api/webhooks/000/000', adapter=RequestsWebhookAdapter())
+'''
 
 rss_feed_list = [
     ['https://grahamcluley.com/feed/', 'Graham Cluley'],
@@ -75,7 +77,9 @@ def get_ransomware_updates():
             config_file.set('main', entries['group_name'], entries['discovered'])
         
         message = f'{entries["group_name"]}\n{entries["discovered"]}\n{entries["post_title"]}'
-        ransomware_feed.send(message)
+        # ransomware_feed.send(message)
+        print(f"Ransomware: {message}")
+        
         time.sleep(3)
 
         config_file.set('main', entries['group_name'], entries['discovered'])
@@ -93,16 +97,16 @@ def get_rss_from_url(rss_item, hook_channel_descriptor):
             date_activity = time.strftime('%Y-%m-%dT%H:%M:%S', rss_object.published_parsed)
         except: 
             date_activity = time.strftime('%Y-%m-%dT%H:%M:%S', rss_object.updated_parsed)
-
+            ''' 
             ###
             # No Need to create an entry in Config.txt 
             # by @JMousqueton               
             try:
-                TmpObject = FileConfig.get('main', Entries["group_name"])
+                TmpObject = config_file.get('main', rss_object["group_name"]) # was entries instead of rss_object
             except:
-                FileConfig.set('main', Entries["group_name"], " = ?")
-                TmpObject = FileConfig.get('main', Entries["group_name"])
-
+                config_file.set('main', rss_object["group_name"], " = ?")
+                TmpObject = config_file.get('main', rss_object["group_name"])
+            ''' 
         config_entry = config_file.get('main', rss_item[1])
 
         if config_entry.endswith('?'):
@@ -116,15 +120,17 @@ def get_rss_from_url(rss_item, hook_channel_descriptor):
         message = f'{rss_item[1]}\nDate: {date_activity}\nTitle: {rss_object.title}\nRead more: {rss_object.link}\n'
 
         if hook_channel_descriptor == 1:
-            private_sector_feed.send(message)
+            # private_sector_feed.send(message)
+            print(f"Private Sector: {message}")
         elif hook_channel_descriptor == 2:
-            government_feed.send(message)
+            # government_feed.send(message)
+            print(f"Government: {message}")
         else:
             pass
 
-    LastSaved = FileConfig.get('main', RssItem[1])
+    LastSaved = config_file.get('main', rss_item[1])
 
-    for RssObject in NewsFeed.entries:
+    for RssObject in news_feed.entries:
 
         try:
             DateActivity = time.strftime('%Y-%m-%dT%H:%M:%S', RssObject.published_parsed)
@@ -135,23 +141,24 @@ def get_rss_from_url(rss_item, hook_channel_descriptor):
         #  No Need to create an entry in Config.txt 
         #  by @JMousqueton               
         try:
-            TmpObject = FileConfig.get('main', RssItem[1])
+            TmpObject = config_file.get('main', rss_item[1])
         except:
-            FileConfig.set('main', RssItem[1], " = ?")
-            TmpObject = FileConfig.get('main', RssItem[1])    
+            config_file.set('main', rss_item[1], " = ?")
+            TmpObject = config_file.get('main', rss_item[1])    
         ### 
         
+        IsInitialRun = False
         if "?" in TmpObject:
             IsInitialRun = True
-            FileConfig.set('main', RssItem[1], DateActivity)
+            config_file.set('main', rss_item[1], DateActivity)
 
         if IsInitialRun is False:
             if(TmpObject >= DateActivity):
                 continue
             else:
-                FileConfig.set('main', RssItem[1], DateActivity)
+                config_file.set('main', rss_item[1], DateActivity)
             
-        OutputMessage = RssItem[1]
+        OutputMessage = rss_item[1]
         OutputMessage += "\n"
         OutputMessage += "Date: " + DateActivity
         OutputMessage += "\n"
@@ -160,11 +167,13 @@ def get_rss_from_url(rss_item, hook_channel_descriptor):
         OutputMessage += "Read more: " + RssObject.link
         OutputMessage += "\n"
 
-        if HookChannelDesciptor == 1:
-            PrivateSectorFeed.send(OutputMessage)
+        if hook_channel_descriptor == 1:
+            # PrivateSectorFeed.send(OutputMessage)
+            print(f"Private Sector: {OutputMessage}")
 
-        if HookChannelDesciptor == 2:
-            GovernmentFeed.send(OutputMessage)
+        if hook_channel_descriptor == 2:
+            #GovernmentFeed.send(OutputMessage)
+            print(f"Private Sector: {OutputMessage}")
            
         time.sleep(3)
 
@@ -173,7 +182,8 @@ def get_rss_from_url(rss_item, hook_channel_descriptor):
 
 
 def write_status_messages_to_discord(rss_item):
-    status_messages.send(f'[*]{time.ctime()} checked {rss_item}')
+    # status_messages.send(f'[*]{time.ctime()} checked {rss_item}')
+    print(f"Status: {time.ctime()} checked {rss_item}")
     time.sleep(2) 
 
 
