@@ -1,3 +1,4 @@
+from signal import signal
 import feedparser
 import json
 import os
@@ -79,6 +80,7 @@ def get_ransomware_updates():
         message = f'{entries["group_name"]}\n{entries["discovered"]}\n{entries["post_title"]}'
         # ransomware_feed.send(message)
         print(f"Ransomware: {message}")
+        publish_to_signal(message)
         
         time.sleep(3)
 
@@ -122,20 +124,28 @@ def get_rss_from_url(rss_item, hook_channel_descriptor):
         if hook_channel_descriptor == 1:
             # private_sector_feed.send(message)
             print(f"Private Sector: {message}")
+            publish_to_signal(message)
         elif hook_channel_descriptor == 2:
             # government_feed.send(message)
             print(f"Government: {message}")
+            publish_to_signal(message)
         else:
             pass
 
+        time.sleep(3)
+
+    with open(configuration_file_path, 'w') as f:
+        config_file.write(f)
+
+'''
     LastSaved = config_file.get('main', rss_item[1])
 
-    for RssObject in news_feed.entries:
+    for rss_object in news_feed.entries:
 
         try:
-            DateActivity = time.strftime('%Y-%m-%dT%H:%M:%S', RssObject.published_parsed)
+            DateActivity = time.strftime('%Y-%m-%dT%H:%M:%S', rss_object.published_parsed)
         except: 
-            DateActivity = time.strftime('%Y-%m-%dT%H:%M:%S', RssObject.updated_parsed)
+            DateActivity = time.strftime('%Y-%m-%dT%H:%M:%S', rss_object.updated_parsed)
 
         ###
         #  No Need to create an entry in Config.txt 
@@ -162,23 +172,21 @@ def get_rss_from_url(rss_item, hook_channel_descriptor):
         OutputMessage += "\n"
         OutputMessage += "Date: " + DateActivity
         OutputMessage += "\n"
-        OutputMessage += "Title: " + RssObject.title
+        OutputMessage += "Title: " + rss_object.title
         OutputMessage += "\n"
-        OutputMessage += "Read more: " + RssObject.link
+        OutputMessage += "Read more: " + rss_object.link
         OutputMessage += "\n"
 
         if hook_channel_descriptor == 1:
             # PrivateSectorFeed.send(OutputMessage)
             print(f"Private Sector: {OutputMessage}")
+            publish_to_signal(OutputMessage)
 
         if hook_channel_descriptor == 2:
             #GovernmentFeed.send(OutputMessage)
             print(f"Private Sector: {OutputMessage}")
-           
-        time.sleep(3)
-
-    with open(configuration_file_path, 'w') as f:
-        config_file.write(f)
+            publish_to_signal(OutputMessage)
+'''
 
 
 def write_status_messages_to_discord(rss_item):
@@ -186,6 +194,20 @@ def write_status_messages_to_discord(rss_item):
     print(f"Status: {time.ctime()} checked {rss_item}")
     time.sleep(2) 
 
+signal_configuration_file_path = os.path.join(os.path.split(os.path.abspath(__file__))[0], 'signal.conf')
+signal_conf = ConfigParser()
+signal_conf.read(signal_configuration_file_path)
+
+def publish_to_signal(message):
+    headers = {'Content-type': 'application/json'}
+    message = message.replace('\n', '\\n').replace('\t', '\\t')
+    print(f"Url: {signal_conf['signal']['signal_url']}/v2/send")
+    print(f'Data: {{"message":"{message}", "number":"{signal_conf["signal"]["sending_number"]}", "recipients":["{signal_conf["signal"]["receiving_number"]}"]}}')
+    resp = requests.post(
+        url=f"{signal_conf['signal']['signal_url']}/v2/send", 
+        data=f'{{ "message":"{message}", "number":"{signal_conf["signal"]["sending_number"]}", "recipients":["{signal_conf["signal"]["receiving_number"]}"]}}',
+        headers=headers)
+    print(resp.content)
 
 if __name__ == '__main__':
     while(True):

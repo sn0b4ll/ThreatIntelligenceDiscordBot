@@ -1,7 +1,7 @@
 [main]
 graham cluley = 2022-08-12T10:36:30
-threatpost = 2022-08-19T15:25:56
-krebs on security = 2022-08-18T15:27:53
+threatpost = 2022-07-19T15:25:56
+krebs on security = 2022-07-18T15:27:53
 dark reading = 2022-08-21T19:31:29
 we live security = 2022-08-19T16:45:30
 davinci forensics = 2022-08-20T08:50:36
