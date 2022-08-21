@@ -99,16 +99,7 @@ def get_rss_from_url(rss_item, hook_channel_descriptor):
             date_activity = time.strftime('%Y-%m-%dT%H:%M:%S', rss_object.published_parsed)
         except: 
             date_activity = time.strftime('%Y-%m-%dT%H:%M:%S', rss_object.updated_parsed)
-            ''' 
-            ###
-            # No Need to create an entry in Config.txt 
-            # by @JMousqueton               
-            try:
-                TmpObject = config_file.get('main', rss_object["group_name"]) # was entries instead of rss_object
-            except:
-                config_file.set('main', rss_object["group_name"], " = ?")
-                TmpObject = config_file.get('main', rss_object["group_name"])
-            ''' 
+
         config_entry = config_file.get('main', rss_item[1])
 
         if config_entry.endswith('?'):
@@ -136,58 +127,6 @@ def get_rss_from_url(rss_item, hook_channel_descriptor):
 
     with open(configuration_file_path, 'w') as f:
         config_file.write(f)
-
-'''
-    LastSaved = config_file.get('main', rss_item[1])
-
-    for rss_object in news_feed.entries:
-
-        try:
-            DateActivity = time.strftime('%Y-%m-%dT%H:%M:%S', rss_object.published_parsed)
-        except: 
-            DateActivity = time.strftime('%Y-%m-%dT%H:%M:%S', rss_object.updated_parsed)
-
-        ###
-        #  No Need to create an entry in Config.txt 
-        #  by @JMousqueton               
-        try:
-            TmpObject = config_file.get('main', rss_item[1])
-        except:
-            config_file.set('main', rss_item[1], " = ?")
-            TmpObject = config_file.get('main', rss_item[1])    
-        ### 
-        
-        IsInitialRun = False
-        if "?" in TmpObject:
-            IsInitialRun = True
-            config_file.set('main', rss_item[1], DateActivity)
-
-        if IsInitialRun is False:
-            if(TmpObject >= DateActivity):
-                continue
-            else:
-                config_file.set('main', rss_item[1], DateActivity)
-            
-        OutputMessage = rss_item[1]
-        OutputMessage += "\n"
-        OutputMessage += "Date: " + DateActivity
-        OutputMessage += "\n"
-        OutputMessage += "Title: " + rss_object.title
-        OutputMessage += "\n"
-        OutputMessage += "Read more: " + rss_object.link
-        OutputMessage += "\n"
-
-        if hook_channel_descriptor == 1:
-            # PrivateSectorFeed.send(OutputMessage)
-            print(f"Private Sector: {OutputMessage}")
-            publish_to_signal(OutputMessage)
-
-        if hook_channel_descriptor == 2:
-            #GovernmentFeed.send(OutputMessage)
-            print(f"Private Sector: {OutputMessage}")
-            publish_to_signal(OutputMessage)
-'''
-
 
 def write_status_messages_to_discord(rss_item):
     # status_messages.send(f'[*]{time.ctime()} checked {rss_item}')
