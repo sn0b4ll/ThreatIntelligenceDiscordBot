@@ -140,13 +140,16 @@ signal_conf.read(signal_configuration_file_path)
 def publish_to_signal(message):
     headers = {'Content-type': 'application/json'}
     message = message.replace('\n', '\\n').replace('\t', '\\t')
-    print(f"Url: {signal_conf['signal']['signal_url']}/v2/send")
-    print(f'Data: {{"message":"{message}", "number":"{signal_conf["signal"]["sending_number"]}", "recipients":["{signal_conf["signal"]["receiving_number"]}"]}}')
-    resp = requests.post(
-        url=f"{signal_conf['signal']['signal_url']}/v2/send", 
-        data=f'{{ "message":"{message}", "number":"{signal_conf["signal"]["sending_number"]}", "recipients":["{signal_conf["signal"]["receiving_number"]}"]}}',
-        headers=headers)
-    print(resp.content)
+
+    try:
+        resp = requests.post(
+            url=f"{signal_conf['signal']['signal_url']}/v2/send", 
+            data=f'{{ "message":"{message}", "number":"{signal_conf["signal"]["sending_number"]}", "recipients":["{signal_conf["signal"]["receiving_number"]}"]}}',
+            headers=headers)
+        print(f'[+] Send: {{"message":"{message}", "number":"{signal_conf["signal"]["sending_number"]}", "recipients":["{signal_conf["signal"]["receiving_number"]}"]}}')
+    except:
+        print(f'[!] Unable to send: {{"message":"{message}", "number":"{signal_conf["signal"]["sending_number"]}", "recipients":["{signal_conf["signal"]["receiving_number"]}"]}}')
+        
 
 if __name__ == '__main__':
     while(True):
