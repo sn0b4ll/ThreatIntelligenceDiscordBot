@@ -1,23 +1,17 @@
-from signal import signal
 import feedparser
-import json
 import os
 import requests
 import time
+import logging
+
 from configparser import ConfigParser, NoOptionError
-# from discord import Webhook, RequestsWebhookAdapter
+from signal import signal
+
+# Configure logger
+logging.basicConfig(format='%(asctime)s %(message)s',  level=logging.INFO)
 
 # expects the configuration file in the same directory as this script by default, replace if desired otherwise
 configuration_file_path = os.path.join(os.path.split(os.path.abspath(__file__))[0], 'Config.txt')
-
-# put the discord hook urls to the channels you want to receive feeds in here
-''' 
-private_sector_feed = Webhook.from_url('https://discord.com/api/webhooks/000/000', adapter=RequestsWebhookAdapter())
-government_feed = Webhook.from_url('https://discord.com/api/webhooks/000/000', adapter=RequestsWebhookAdapter())
-ransomware_feed = Webhook.from_url('https://discord.com/api/webhooks/000/000', adapter=RequestsWebhookAdapter())
-# this one is logging of moniotring status only
-status_messages = Webhook.from_url('https://discord.com/api/webhooks/000/000', adapter=RequestsWebhookAdapter())
-'''
 
 rss_feed_list = [
     ['https://grahamcluley.com/feed/', 'Graham Cluley'],
@@ -79,7 +73,7 @@ def get_ransomware_updates():
         
         message = f'{entries["group_name"]}\n{entries["discovered"]}\n{entries["post_title"]}'
         # ransomware_feed.send(message)
-        print(f"Ransomware: {message}")
+        logging.info(f"Ransomware: {message}")
         publish_to_signal(message)
         
         time.sleep(3)
@@ -114,11 +108,11 @@ def get_rss_from_url(rss_item, hook_channel_descriptor):
 
         if hook_channel_descriptor == 1:
             # private_sector_feed.send(message)
-            print(f"Private Sector: {message}")
+            logging.info(f"Private Sector: {message}")
             publish_to_signal(message)
         elif hook_channel_descriptor == 2:
             # government_feed.send(message)
-            print(f"Government: {message}")
+            logging.info(f"Government: {message}")
             publish_to_signal(message)
         else:
             pass
@@ -128,10 +122,6 @@ def get_rss_from_url(rss_item, hook_channel_descriptor):
     with open(configuration_file_path, 'w') as f:
         config_file.write(f)
 
-def write_status_messages_to_discord(rss_item):
-    # status_messages.send(f'[*]{time.ctime()} checked {rss_item}')
-    print(f"Status: {time.ctime()} checked {rss_item}")
-    time.sleep(2) 
 
 signal_configuration_file_path = os.path.join(os.path.split(os.path.abspath(__file__))[0], 'signal.conf')
 signal_conf = ConfigParser()
@@ -146,22 +136,21 @@ def publish_to_signal(message):
             url=f"{signal_conf['signal']['signal_url']}/v2/send", 
             data=f'{{ "message":"{message}", "number":"{signal_conf["signal"]["sending_number"]}", "recipients":["{signal_conf["signal"]["receiving_number"]}"]}}',
             headers=headers)
-        print(f'[+] Send: {{"message":"{message}", "number":"{signal_conf["signal"]["sending_number"]}", "recipients":["{signal_conf["signal"]["receiving_number"]}"]}}')
+        logging.info(f'[+] Send: {{"message":"{message}", "number":"{signal_conf["signal"]["sending_number"]}", "recipients":["{signal_conf["signal"]["receiving_number"]}"]}}')
     except:
-        print(f'[!] Unable to send: {{"message":"{message}", "number":"{signal_conf["signal"]["sending_number"]}", "recipients":["{signal_conf["signal"]["receiving_number"]}"]}}')
+        logging.info(f'[!] Unable to send: {{"message":"{message}", "number":"{signal_conf["signal"]["sending_number"]}", "recipients":["{signal_conf["signal"]["receiving_number"]}"]}}')
         
 
 if __name__ == '__main__':
+    logging.info('[+] Bot started]')
     while(True):
         for rss_item in rss_feed_list:
             get_rss_from_url(rss_item, 1)
-            write_status_messages_to_discord(rss_item[1])
 
         for rss_item in gov_rss_feed_list:
             get_rss_from_url(rss_item, 2)
-            write_status_messages_to_discord(rss_item[1])
 
         get_ransomware_updates()
-        write_status_messages_to_discord('Ransomware TA List')
 
+        logging.info('[+] Bot finished loop')
         time.sleep(1800)
